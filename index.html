@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Black Cloverdle</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0a0c10;
+      --surface: #111318;
+      --surface2: #1a1d24;
+      --border: #2a2d36;
+      --border2: #3a3d4a;
+      --text: #e8eaf0;
+      --text2: #8a8fa8;
+      --text3: #555a6e;
+      --green: #2d6a4f;
+      --green-bg: #1a3d2e;
+      --green-text: #74c69d;
+      --yellow: #7b5e1a;
+      --yellow-bg: #3d2d0a;
+      --yellow-text: #f4a935;
+      --gray-bg: #1a1d24;
+      --gray-text: #555a6e;
+      --accent: #6c4ed4;
+      --accent2: #9b7ef8;
+      --clover: #3a7d44;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { min-height: 100vh; background: var(--bg); color: var(--text); font-family: 'Outfit', sans-serif; }
+
+    /* BG texture */
+    body::before {
+      content: '';
+      position: fixed; inset: 0; z-index: 0;
+      background:
+        radial-gradient(ellipse 60% 40% at 20% 10%, rgba(108,78,212,0.08) 0%, transparent 60%),
+        radial-gradient(ellipse 40% 50% at 80% 80%, rgba(58,125,68,0.07) 0%, transparent 60%);
+      pointer-events: none;
+    }
+
+    #app { position: relative; z-index: 1; max-width: 900px; margin: 0 auto; padding: 0 16px 60px; }
+
+    /* HEADER */
+    header {
+      text-align: center;
+      padding: 32px 0 24px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 28px;
+    }
+    .logo-row { display: flex; align-items: center; justify-content: center; gap: 14px; margin-bottom: 6px; }
+    .clover-icon { font-size: 28px; }
+    header h1 {
+      font-family: 'Cinzel', serif;
+      font-size: clamp(22px, 5vw, 34px);
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      background: linear-gradient(135deg, #c8b6ff 0%, #9b7ef8 40%, #74c69d 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    header p { font-size: 13px; color: var(--text2); margin-top: 4px; }
+    .stats-row { display: flex; gap: 20px; justify-content: center; margin-top: 14px; }
+    .stat { text-align: center; }
+    .stat-val { font-size: 20px; font-weight: 600; color: var(--accent2); }
+    .stat-label { font-size: 11px; color: var(--text3); margin-top: 2px; }
+
+    /* SEARCH */
+    #search-wrap { position: relative; margin-bottom: 10px; }
+    #search-row { display: flex; gap: 8px; }
+    #search-input {
+      flex: 1;
+      padding: 12px 16px;
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      border-radius: 10px;
+      color: var(--text);
+      font-family: 'Outfit', sans-serif;
+      font-size: 15px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    #search-input:focus { border-color: var(--accent); }
+    #search-input::placeholder { color: var(--text3); }
+    #guess-btn {
+      padding: 12px 22px;
+      background: var(--accent);
+      border: none;
+      border-radius: 10px;
+      color: #fff;
+      font-family: 'Outfit', sans-serif;
+      font-size: 15px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+      white-space: nowrap;
+    }
+    #guess-btn:hover { background: #7d62e0; }
+    #guess-btn:active { transform: scale(0.97); }
+    #guess-btn:disabled { background: var(--border2); cursor: not-allowed; }
+
+    #dropdown {
+      position: absolute; top: calc(100% + 4px); left: 0; right: 80px;
+      background: var(--surface2);
+      border: 1px solid var(--border2);
+      border-radius: 10px;
+      z-index: 100;
+      max-height: 220px;
+      overflow-y: auto;
+      display: none;
+    }
+    .drop-item {
+      padding: 10px 14px;
+      font-size: 14px;
+      cursor: pointer;
+      color: var(--text);
+      border-bottom: 1px solid var(--border);
+      transition: background 0.1s;
+    }
+    .drop-item:last-child { border-bottom: none; }
+    .drop-item:hover { background: var(--surface); }
+    .drop-item mark { background: none; color: var(--accent2); font-weight: 600; }
+
+    /* HINTS & ATTEMPTS */
+    #meta-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; flex-wrap: wrap; gap: 8px; }
+    #attempts-badge {
+      font-size: 13px;
+      color: var(--text2);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 4px 14px;
+    }
+    #hint-btn {
+      font-size: 13px; color: var(--accent2); background: none; border: 1px solid var(--border2);
+      border-radius: 20px; padding: 4px 14px; cursor: pointer; transition: background 0.15s;
+    }
+    #hint-btn:hover { background: var(--surface2); }
+    #hint-btn:disabled { color: var(--text3); cursor: default; }
+    #hint-box {
+      background: var(--surface2);
+      border: 1px solid var(--border2);
+      border-left: 3px solid var(--accent);
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 13px;
+      color: var(--text2);
+      margin-bottom: 14px;
+      display: none;
+    }
+
+    /* TABLE HEADERS */
+    #col-headers {
+      display: grid;
+      gap: 4px;
+      margin-bottom: 4px;
+    }
+    .col-h {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text3);
+      text-align: center;
+      padding: 4px 2px;
+    }
+    .col-h:first-child { text-align: left; padding-left: 10px; }
+
+    /* GUESS ROWS */
+    #guesses { display: flex; flex-direction: column; gap: 4px; }
+    .guess-row { display: grid; gap: 4px; animation: rowIn 0.3s ease both; }
+    @keyframes rowIn {
+      from { opacity: 0; transform: translateY(-8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .cell {
+      border-radius: 8px;
+      padding: 8px 6px;
+      text-align: center;
+      font-size: clamp(10px, 2vw, 12px);
+      font-weight: 500;
+      display: flex; align-items: center; justify-content: center;
+      min-height: 50px;
+      line-height: 1.3;
+      border: 1px solid var(--border);
+    }
+    .cell-name {
+      font-size: clamp(10px, 1.8vw, 12px);
+      font-weight: 600;
+      background: var(--surface);
+      color: var(--text);
+      text-align: left;
+      justify-content: flex-start;
+      padding: 8px 10px;
+      border-color: var(--border2);
+    }
+    .cell-correct { background: var(--green-bg); color: var(--green-text); border-color: var(--green); }
+    .cell-wrong   { background: var(--gray-bg);  color: var(--gray-text);  border-color: var(--border); }
+    .cell-partial { background: var(--yellow-bg); color: var(--yellow-text); border-color: var(--yellow); }
+
+    /* LEGEND */
+    #legend {
+      display: flex; gap: 12px; flex-wrap: wrap; justify-content: center;
+      margin-bottom: 20px; margin-top: 4px;
+    }
+    .legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text2); }
+    .legend-dot {
+      width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0;
+    }
+    .ld-green  { background: var(--green-bg);  border: 1px solid var(--green); }
+    .ld-yellow { background: var(--yellow-bg); border: 1px solid var(--yellow); }
+    .ld-gray   { background: var(--gray-bg);   border: 1px solid var(--border2); }
+
+    /* RESULT BANNER */
+    #result-banner {
+      text-align: center;
+      padding: 18px 20px;
+      border-radius: 12px;
+      margin-top: 20px;
+      font-size: 16px;
+      font-weight: 600;
+      display: none;
+      animation: rowIn 0.4s ease both;
+    }
+    #result-banner.win  { background: var(--green-bg); color: var(--green-text); border: 1px solid var(--green); }
+    #result-banner.lose { background: #3d0e0e; color: #ff8080; border: 1px solid #6d1818; }
+    #result-banner small { display: block; font-size: 13px; font-weight: 400; margin-top: 4px; opacity: 0.8; }
+
+    #play-again-btn {
+      display: none; margin: 14px auto 0;
+      padding: 10px 28px;
+      background: var(--surface2);
+      border: 1px solid var(--border2);
+      border-radius: 10px;
+      color: var(--text);
+      font-family: 'Outfit', sans-serif;
+      font-size: 14px; font-weight: 500;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    #play-again-btn:hover { background: var(--surface); }
+
+    /* MOBILE */
+    @media (max-width: 600px) {
+      #guess-btn { padding: 12px 14px; font-size: 14px; }
+      #dropdown { right: 70px; }
+    }
+  </style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div class="logo-row">
+      <span class="clover-icon">🍀</span>
+      <h1>Black Cloverdle</h1>
+      <span class="clover-icon">🍀</span>
+    </div>
+    <p>Guess today's Black Clover character · 8 attempts</p>
+    <div class="stats-row">
+      <div class="stat"><div class="stat-val" id="stat-played">0</div><div class="stat-label">Played</div></div>
+      <div class="stat"><div class="stat-val" id="stat-wins">0</div><div class="stat-label">Won</div></div>
+      <div class="stat"><div class="stat-val" id="stat-streak">0</div><div class="stat-label">Streak</div></div>
+    </div>
+  </header>
+
+  <div id="legend">
+    <div class="legend-item"><div class="legend-dot ld-green"></div>Correct</div>
+    <div class="legend-item"><div class="legend-dot ld-yellow"></div>Partial match</div>
+    <div class="legend-item"><div class="legend-dot ld-gray"></div>Wrong</div>
+  </div>
+
+  <div id="search-wrap">
+    <div id="search-row">
+      <input id="search-input" type="text" placeholder="Type a character name…" autocomplete="off" />
+      <button id="guess-btn">Guess</button>
+    </div>
+    <div id="dropdown"></div>
+  </div>
+
+  <div id="meta-row">
+    <div id="attempts-badge">8 attempts remaining</div>
+    <button id="hint-btn">💡 Show hint</button>
+  </div>
+  <div id="hint-box"></div>
+
+  <div id="col-headers"></div>
+  <div id="guesses"></div>
+  <div id="result-banner"></div>
+  <button id="play-again-btn">🔄 Play again (random)</button>
+</div>
+
+<script>
+// ============================================================
+// CHARACTER DATABASE — 70+ characters
+// Fields: name, squad, gender, magic, grimoire, origin, rank
+// ============================================================
+const CHARACTERS = [
+  // BLACK BULLS
+  { name:"Asta",            squad:"Black Bulls",    gender:"Male",   magic:"Anti-Magic",      grimoire:"5-Leaf",   origin:"Clover",     rank:"Junior Magic Knight" },
+  { name:"Yami Sukehiro",   squad:"Black Bulls",    gender:"Male",   magic:"Dark Magic",      grimoire:"3-Leaf",   origin:"Land of the Sun", rank:"Captain" },
+  { name:"Noelle Silva",    squad:"Black Bulls",    gender:"Female", magic:"Water Magic",     grimoire:"3-Leaf",   origin:"Clover",     rank:"Junior Magic Knight" },
+  { name:"Magna Swing",     squad:"Black Bulls",    gender:"Male",   magic:"Fire Magic",      grimoire:"3-Leaf",   origin:"Clover",     rank:"Junior Magic Knight" },
+  { name:"Luck Voltia",     squad:"Black Bulls",    gender:"Male",   magic:"Lightning Magic", grimoire:"3-Leaf",   origin:"Clover",     rank:"Junior Magic Knight" },
+  { name:"Vanessa Enoteca", squad:"Black Bulls",    gender:"Female", magic:"Thread Magic",    grimoire:"3-Leaf",   origin:"Clover",     rank:"Junior Magic Knight" },
+  { name:"Finral Roulacase",squad:"Black Bulls",    gender:"Male",   magic:"Spatial Magic",   grimoire:"3-Leaf",   origin:"Clover",     rank:"Junior Magic Knight" },
+  { name:"Gordon Agrippa",  squad:"Black Bulls",    gender:"Male",   magic:"Poison Magic",    grimoire:"3-Leaf",   origin:"Clover",     rank:"Junior Magic Knight" },
+  { name:"Gauche Adlai",    squad:"Black Bulls",    gender:"Male",   magic:"Mirror Magic",    grimoire:"3-Leaf",   origin:"Clover",     rank:"Junior Magic Knight" },
+  { name:"Charmy Pappitson",squad:"Black Bulls",    gender:"Female", magic:"Cotton Magic",    grimoire:"3-Leaf",   origin:"Clover",     rank:"Junior Magic Knight" },
+  { name:"Henry Legolant",  squad:"Black Bulls",    gender:"Male",   magic:"Recombination Magic", grimoire:"3-Leaf", origin:"Clover",   rank:"Junior Magic Knight" },
+  { name:"Zora Ideale",     squad:"Black Bulls",    gender:"Male",   magic:"Ash Magic",       grimoire:"3-Leaf",   origin:"Clover",     rank:"Junior Magic Knight" },
+  { name:"Grey",            squad:"Black Bulls",    gender:"Female", magic:"Transmutation Magic", grimoire:"3-Leaf", origin:"Clover",   rank:"Junior Magic Knight" },
+  { name:"Secre Swallowtail",squad:"Black Bulls",   gender:"Female", magic:"Sealing Magic",   grimoire:"3-Leaf",   origin:"Clover",     rank:"Junior Magic Knight" },
+  { name:"Nacht Faust",     squad:"Black Bulls",    gender:"Male",   magic:"Shadow Magic",    grimoire:"3-Leaf",   origin:"Clover",     rank:"Vice-Captain" },
+
+  // GOLDEN DAWN
+  { name:"Yuno",            squad:"Golden Dawn",    gender:"Male",   magic:"Wind Magic",      grimoire:"4-Leaf",   origin:"Spade",      rank:"Vice-Captain" },
+  { name:"William Vangeance",squad:"Golden Dawn",   gender:"Male",   magic:"World Tree Magic",grimoire:"4-Leaf",   origin:"Clover",     rank:"Captain" },
+  { name:"Mimosa Vermillion",squad:"Golden Dawn",   gender:"Female", magic:"Plant Magic",     grimoire:"3-Leaf",   origin:"Clover",     rank:"Junior Magic Knight" },
+  { name:"Klaus Lunettes",  squad:"Golden Dawn",    gender:"Male",   magic:"Steel Magic",     grimoire:"3-Leaf",   origin:"Clover",     rank:"Senior Magic Knight" },
+  { name:"Langris Vaude",   squad:"Golden Dawn",    gender:"Male",   magic:"Spatial Magic",   grimoire:"4-Leaf",   origin:"Clover",     rank:"Vice-Captain" },
+  { name:"Alecdora Sandler",squad:"Golden Dawn",    gender:"Male",   magic:"Sand Magic",      grimoire:"3-Leaf",   origin:"Clover",     rank:"Senior Magic Knight" },
+
+  // CRIMSON LION
+  { name:"Fuegoleon Vermillion", squad:"Crimson Lion Kings", gender:"Male", magic:"Fire Magic", grimoire:"3-Leaf", origin:"Clover", rank:"Captain" },
+  { name:"Mereoleona Vermillion",squad:"Crimson Lion Kings", gender:"Female", magic:"Fire Magic", grimoire:"3-Leaf", origin:"Clover", rank:"Captain" },
+  { name:"Leopold Vermillion",   squad:"Crimson Lion Kings", gender:"Male", magic:"Fire Magic", grimoire:"3-Leaf", origin:"Clover", rank:"Junior Magic Knight" },
+  { name:"Randall Lufthold",     squad:"Crimson Lion Kings", gender:"Male", magic:"Wind Magic", grimoire:"3-Leaf", origin:"Clover", rank:"Junior Magic Knight" },
+
+  // BLUE ROSE
+  { name:"Charlotte Roselei", squad:"Blue Rose Knights", gender:"Female", magic:"Briar Magic",    grimoire:"3-Leaf", origin:"Clover", rank:"Captain" },
+  { name:"Sol Marron",         squad:"Blue Rose Knights", gender:"Female", magic:"Earth Magic",    grimoire:"3-Leaf", origin:"Clover", rank:"Junior Magic Knight" },
+  { name:"Puli Angel",         squad:"Blue Rose Knights", gender:"Female", magic:"Angel Wing Magic",grimoire:"3-Leaf", origin:"Clover", rank:"Junior Magic Knight" },
+
+  // GREEN MANTIS
+  { name:"Jack the Ripper", squad:"Green Mantis",   gender:"Male",   magic:"Slash Magic",     grimoire:"3-Leaf",   origin:"Clover",     rank:"Captain" },
+  { name:"Sekke Bronzazza", squad:"Green Mantis",   gender:"Male",   magic:"Bronze Magic",    grimoire:"3-Leaf",   origin:"Clover",     rank:"Junior Magic Knight" },
+
+  // AQUA DEER
+  { name:"Rill Boismortier",squad:"Aqua Deer",      gender:"Male",   magic:"Painting Magic",  grimoire:"3-Leaf",   origin:"Clover",     rank:"Captain" },
+  { name:"Fragil Tormenta", squad:"Aqua Deer",      gender:"Female", magic:"Snow Magic",      grimoire:"3-Leaf",   origin:"Clover",     rank:"Junior Magic Knight" },
+
+  // SILVER EAGLE
+  { name:"Nozel Silva",     squad:"Silver Eagles",  gender:"Male",   magic:"Mercury Magic",   grimoire:"3-Leaf",   origin:"Clover",     rank:"Captain" },
+  { name:"Solid Silva",     squad:"Silver Eagles",  gender:"Male",   magic:"Water Magic",     grimoire:"3-Leaf",   origin:"Clover",     rank:"Junior Magic Knight" },
+  { name:"Nebra Silva",     squad:"Silver Eagles",  gender:"Female", magic:"Mist Magic",      grimoire:"3-Leaf",   origin:"Clover",     rank:"Junior Magic Knight" },
+
+  // CORAL PEACOCK
+  { name:"Dorothy Unsworth",squad:"Coral Peacock",  gender:"Female", magic:"Dream Magic",     grimoire:"3-Leaf",   origin:"Clover",     rank:"Captain" },
+  { name:"Rick Cornell",    squad:"Coral Peacock",  gender:"Male",   magic:"Compound Magic",  grimoire:"3-Leaf",   origin:"Clover",     rank:"Junior Magic Knight" },
+
+  // PURPLE ORCA
+  { name:"Gueldre Poizot",  squad:"Purple Orca",    gender:"Male",   magic:"Permeation Magic",grimoire:"3-Leaf",   origin:"Clover",     rank:"Captain" },
+  { name:"Revchi Salik",    squad:"Purple Orca",    gender:"Male",   magic:"Chain Magic",     grimoire:"3-Leaf",   origin:"Clover",     rank:"Junior Magic Knight" },
+
+  // CLOVER KINGDOM — ROYALS / NOBLES
+  { name:"Julius Novachrono",squad:"Wizard King",   gender:"Male",   magic:"Time Magic",      grimoire:"3-Leaf",   origin:"Clover",     rank:"Wizard King" },
+  { name:"Lucius Zogratis", squad:"Clover Kingdom", gender:"Male",   magic:"Soul Magic",      grimoire:"3-Leaf",   origin:"Clover",     rank:"Paladin" },
+  { name:"Augustus Kira Clover XIII", squad:"Clover Kingdom", gender:"Male", magic:"None", grimoire:"None", origin:"Clover", rank:"King" },
+  { name:"Marx Francois",   squad:"Clover Kingdom", gender:"Male",   magic:"Memory Manipulation Magic", grimoire:"3-Leaf", origin:"Clover", rank:"Royal Knight" },
+  { name:"Owen",            squad:"Clover Kingdom", gender:"Male",   magic:"Water Healing Magic", grimoire:"3-Leaf", origin:"Clover", rank:"Royal Knight" },
+  { name:"Damnatio Kira",   squad:"Clover Kingdom", gender:"Male",   magic:"Scale Magic",     grimoire:"3-Leaf",   origin:"Clover",     rank:"Judge" },
+  { name:"Acier Silva",     squad:"Silver Eagles",  gender:"Female", magic:"Steel Magic",     grimoire:"3-Leaf",   origin:"Clover",     rank:"Captain (former)" },
+
+  // EYE OF THE MIDNIGHT SUN / ELVES
+  { name:"Patolli",         squad:"Eye of Midnight Sun", gender:"Male",   magic:"Light Magic", grimoire:"4-Leaf",  origin:"Elf Tribe",  rank:"Leader" },
+  { name:"Rhya",            squad:"Eye of Midnight Sun", gender:"Male",   magic:"Imitation Magic", grimoire:"3-Leaf", origin:"Elf Tribe", rank:"Third Eye" },
+  { name:"Vetto",           squad:"Eye of Midnight Sun", gender:"Male",   magic:"Combination Battle Magic", grimoire:"3-Leaf", origin:"Elf Tribe", rank:"Third Eye" },
+  { name:"Fana",            squad:"Eye of Midnight Sun", gender:"Female", magic:"Fire Magic",  grimoire:"3-Leaf",   origin:"Elf Tribe",  rank:"Third Eye" },
+  { name:"Licht",           squad:"Elf Tribe",       gender:"Male",   magic:"Sword Magic",     grimoire:"4-Leaf",   origin:"Elf Tribe",  rank:"Chief" },
+  { name:"Tetia",           squad:"Elf Tribe",       gender:"Female", magic:"Compound Magic",  grimoire:"3-Leaf",   origin:"Elf Tribe",  rank:"Member" },
+  { name:"Ronne",           squad:"Eye of Midnight Sun", gender:"Male", magic:"Soul Corpse Magic", grimoire:"3-Leaf", origin:"Clover",  rank:"Member" },
+  { name:"Sally",           squad:"Eye of Midnight Sun", gender:"Female", magic:"Gel Magic",   grimoire:"3-Leaf",   origin:"Clover",     rank:"Researcher" },
+  { name:"Valtos",          squad:"Eye of Midnight Sun", gender:"Male",  magic:"Spatial Magic",grimoire:"3-Leaf",   origin:"Clover",     rank:"Member" },
+  { name:"Rades Spirito",   squad:"Eye of Midnight Sun", gender:"Male",  magic:"Wraith Magic", grimoire:"3-Leaf",   origin:"Clover",     rank:"Member" },
+
+  // SPADE KINGDOM — DARK TRIAD
+  { name:"Dante Zogratis",  squad:"Dark Triad",     gender:"Male",   magic:"Gravity Magic",   grimoire:"3-Leaf",   origin:"Spade",      rank:"Dark Triad" },
+  { name:"Zenon Zogratis",  squad:"Dark Triad",     gender:"Male",   magic:"Bone Magic",      grimoire:"3-Leaf",   origin:"Spade",      rank:"Dark Triad" },
+  { name:"Vanica Zogratis", squad:"Dark Triad",     gender:"Female", magic:"Dark Curses Magic",grimoire:"3-Leaf",  origin:"Spade",      rank:"Dark Triad" },
+
+  // SPADE KINGDOM — DARK DISCIPLES
+  { name:"Gaderois Godroc", squad:"Dark Disciples", gender:"Male",   magic:"Stone Magic",     grimoire:"3-Leaf",   origin:"Spade",      rank:"Dark Disciple" },
+  { name:"Foyal Migusteau", squad:"Dark Disciples", gender:"Male",   magic:"Mist Magic",      grimoire:"3-Leaf",   origin:"Spade",      rank:"Dark Disciple" },
+  { name:"Svenkin Gatard",  squad:"Dark Disciples", gender:"Male",   magic:"Skin Magic",      grimoire:"3-Leaf",   origin:"Spade",      rank:"Dark Disciple" },
+  { name:"Halbet Chevour",  squad:"Dark Disciples", gender:"Female", magic:"Whip Magic",      grimoire:"3-Leaf",   origin:"Spade",      rank:"Dark Disciple" },
+
+  // HEART KINGDOM
+  { name:"Lolopechka",      squad:"Heart Kingdom",  gender:"Female", magic:"Water Magic",     grimoire:"3-Leaf",   origin:"Heart",      rank:"Princess" },
+  { name:"Gadjah",          squad:"Heart Kingdom",  gender:"Male",   magic:"Lightning Magic", grimoire:"3-Leaf",   origin:"Heart",      rank:"Spirit Guardian" },
+  { name:"Potrof",          squad:"Heart Kingdom",  gender:"Male",   magic:"Plant Magic",     grimoire:"3-Leaf",   origin:"Heart",      rank:"Spirit Guardian" },
+  { name:"Floga",           squad:"Heart Kingdom",  gender:"Male",   magic:"Fire Magic",      grimoire:"3-Leaf",   origin:"Heart",      rank:"Spirit Guardian" },
+  { name:"Undine",          squad:"Heart Kingdom",  gender:"Female", magic:"Water Spirit",    grimoire:"None",     origin:"Heart",      rank:"Spirit" },
+
+  // DIAMOND KINGDOM
+  { name:"Mars",            squad:"Diamond Kingdom",gender:"Male",   magic:"Compound Magic",  grimoire:"3-Leaf",   origin:"Diamond",    rank:"General" },
+  { name:"Ladros",          squad:"Diamond Kingdom",gender:"Male",   magic:"Mana Method",     grimoire:"None",     origin:"Diamond",    rank:"General" },
+  { name:"Fana (Diamond)",  squad:"Diamond Kingdom",gender:"Female", magic:"Fire Magic",      grimoire:"3-Leaf",   origin:"Diamond",    rank:"General" },
+  { name:"Lotus Whomalt",   squad:"Diamond Kingdom",gender:"Male",   magic:"Smoke Magic",     grimoire:"3-Leaf",   origin:"Diamond",    rank:"General" },
+  { name:"Morris Libardirt",squad:"Diamond Kingdom",gender:"Male",   magic:"Knowledge Magic", grimoire:"3-Leaf",   origin:"Diamond",    rank:"Prime Minister" },
+
+  // DEVILS / UNDERWORLD
+  { name:"Liebe",           squad:"Devil",          gender:"Male",   magic:"Anti-Magic",      grimoire:"5-Leaf",   origin:"Underworld", rank:"Devil" },
+  { name:"Zagred",          squad:"Devil",          gender:"Male",   magic:"Word Soul Magic", grimoire:"None",     origin:"Underworld", rank:"Devil" },
+  { name:"Megicula",        squad:"Devil",          gender:"Female", magic:"Curse-Warding Magic", grimoire:"None", origin:"Underworld", rank:"Devil" },
+  { name:"Lucifero",        squad:"Devil",          gender:"Male",   magic:"Gravity Magic",   grimoire:"None",     origin:"Underworld", rank:"Devil King" },
+  { name:"Beelzebub",       squad:"Devil",          gender:"Male",   magic:"Spatial Magic",   grimoire:"None",     origin:"Underworld", rank:"Devil King" },
+  { name:"Astaroth",        squad:"Devil",          gender:"Male",   magic:"Time Magic",      grimoire:"None",     origin:"Underworld", rank:"Devil King" },
+
+  // LAND OF THE SUN
+  { name:"Ryuya Ryudo",     squad:"Land of the Sun",gender:"Male",   magic:"None",            grimoire:"None",     origin:"Land of the Sun", rank:"Shogun" },
+  { name:"Ichika Yami",     squad:"Land of the Sun",gender:"Female", magic:"Dark Magic",      grimoire:"3-Leaf",   origin:"Land of the Sun", rank:"Samurai" },
+  { name:"Yosuga",          squad:"Land of the Sun",gender:"Female", magic:"Body Magic",      grimoire:"3-Leaf",   origin:"Land of the Sun", rank:"Ryuzen Seven" },
+  { name:"Daizaemon",       squad:"Land of the Sun",gender:"Male",   magic:"Bear Magic",      grimoire:"3-Leaf",   origin:"Land of the Sun", rank:"Ryuzen Seven" },
+];
+
+const CATEGORIES = ["squad","gender","magic","grimoire","origin","rank"];
+const CAT_LABELS  = { squad:"Squad", gender:"Gender", magic:"Magic", grimoire:"Grimoire", origin:"Origin", rank:"Rank" };
+const MAX_GUESSES = 8;
+const COL_WIDTHS  = "160px repeat(6, 1fr)";
+
+const HINTS = {
+  "Asta": "Born without magic — he makes up for it with raw willpower.",
+  "Yuno": "Raised in the same orphanage as Asta, secretly a prince.",
+  "Yami Sukehiro": "Foreign captain who fights with a katana and Dark Magic.",
+  "Noelle Silva": "Royal blood she once couldn't control — water bends to her now.",
+  "Julius Novachrono": "Obsessed with collecting rare and unique magic.",
+  "Fuegoleon Vermillion": "A noble prince whose fire never wavers.",
+  "Mereoleona Vermillion": "She trains in active volcanoes — no one argues.",
+  "Charlotte Roselei": "Her Briar Magic hides a secret crush she can't express.",
+  "Luck Voltia": "Smiles before, during, and after every fight.",
+  "Magna Swing": "Commoner born, proving strength isn't about bloodline.",
+  "Vanessa Enoteca": "Her red thread can rewrite fate itself.",
+  "Finral Roulacase": "Teleporter who hates fighting — best support in the squad.",
+  "Gauche Adlai": "Obsessed with his sister Marie; mirrors do his bidding.",
+  "Charmy Pappitson": "Food is her motivation, her power, and her personality.",
+  "Zora Ideale": "Ash traps catch enemies in their own magic.",
+  "Gordon Agrippa": "Speaks too quietly to be heard — his curses speak loud enough.",
+  "Henry Legolant": "Lives inside the base itself; he IS the building.",
+  "Grey": "Extreme shyness hides a powerful transmutation ability.",
+  "Secre Swallowtail": "Ancient bird-girl who sealed the first Wizard King.",
+  "Nacht Faust": "The Black Bulls' shadow vice-captain, devil host.",
+  "William Vangeance": "His mask hides a face shared with someone dangerous.",
+  "Mimosa Vermillion": "Healer of the Golden Dawn with an unrequited feeling.",
+  "Klaus Lunettes": "Steel Magic and strict rules — he warms up eventually.",
+  "Langris Vaude": "Finral's younger brother, consumed by pride and envy.",
+  "Patolli": "Elf leader who wore another man's face for years.",
+  "Licht": "The elf chief whose grief threatened the human world.",
+  "Dante Zogratis": "King of Spade, host of Lucifero, addicted to power.",
+  "Zenon Zogratis": "Single-handedly devastated the Golden Dawn.",
+  "Vanica Zogratis": "Fights for the joy of it; her curse magic is brutal.",
+  "Liebe": "The lowest-ranked devil with the most personal bond to Asta.",
+  "Zagred": "His words literally reshape reality.",
+  "Megicula": "A curse devil who hunted royals for centuries.",
+  "Lucifero": "The devil king of gravity — nearly manifested fully.",
+  "Lolopechka": "Heart Kingdom princess, funny and powerful.",
+  "Gadjah": "Trained Luck in true lightning; sacrificed himself for Lolopechka.",
+  "Nozel Silva": "Cold older brother with mercury — hides guilt about his mother.",
+  "Lucius Zogratis": "The true mastermind behind the Zogratis family's plan.",
+  "Mars": "Diamond Kingdom weapon turned ally with compound magic.",
+  "Ichika Yami": "Yami's little sister from the Land of the Sun.",
+  "Ryuya Ryudo": "Shogun who sees everything — literally.",
+};
+
+// ============================================================
+// GAME STATE
+// ============================================================
+let stats = JSON.parse(localStorage.getItem('bcdle_stats') || '{"played":0,"wins":0,"streak":0}');
+let guesses = [];
+let target = pickTarget();
+let gameOver = false;
+let hintShown = false;
+
+function pickTarget() {
+  const seed = Math.floor(Date.now() / 86400000);
+  return CHARACTERS[seed % CHARACTERS.length];
+}
+
+function compare(guessChar) {
+  return CATEGORIES.map(cat => {
+    const g = guessChar[cat], t = target[cat];
+    if (g === t) return "correct";
+    const gParts = g.split("/").map(s=>s.trim());
+    const tParts = t.split("/").map(s=>s.trim());
+    if (gParts.some(p => tParts.includes(p))) return "partial";
+    return "wrong";
+  });
+}
+
+// ============================================================
+// RENDER
+// ============================================================
+function buildHeaders() {
+  const el = document.getElementById("col-headers");
+  el.style.gridTemplateColumns = COL_WIDTHS;
+  el.innerHTML = ["Character", ...CATEGORIES.map(c => CAT_LABELS[c])].map((l,i) =>
+    `<div class="col-h${i===0?' col-h-name':''}">${l}</div>`
+  ).join('');
+}
+
+function addRow(char, results) {
+  const row = document.createElement("div");
+  row.className = "guess-row";
+  row.style.gridTemplateColumns = COL_WIDTHS;
+  // Name cell
+  const nc = document.createElement("div");
+  nc.className = "cell cell-name"; nc.textContent = char.name;
+  row.appendChild(nc);
+  // Data cells
+  CATEGORIES.forEach((cat, i) => {
+    const c = document.createElement("div");
+    c.className = "cell " + (results[i]==="correct"?"cell-correct":results[i]==="partial"?"cell-partial":"cell-wrong");
+    c.textContent = char[cat];
+    row.appendChild(c);
+  });
+  document.getElementById("guesses").appendChild(row);
+}
+
+function updateAttempts() {
+  const left = MAX_GUESSES - guesses.length;
+  document.getElementById("attempts-badge").textContent =
+    gameOver ? "" : `${left} attempt${left!==1?"s":""} remaining`;
+}
+
+function endGame(won) {
+  gameOver = true;
+  document.getElementById("guess-btn").disabled = true;
+  document.getElementById("search-input").disabled = true;
+  stats.played++;
+  if (won) { stats.wins++; stats.streak++; } else { stats.streak = 0; }
+  localStorage.setItem('bcdle_stats', JSON.stringify(stats));
+  renderStats();
+
+  const banner = document.getElementById("result-banner");
+  banner.style.display = "block";
+  if (won) {
+    banner.className = "win";
+    banner.innerHTML = `🍀 Correct! It was <strong>${target.name}</strong>!<small>Solved in ${guesses.length} attempt${guesses.length!==1?"s":""}.</small>`;
+  } else {
+    banner.className = "lose";
+    banner.innerHTML = `😔 The character was <strong>${target.name}</strong>.<small>Better luck next time!</small>`;
+  }
+  document.getElementById("play-again-btn").style.display = "block";
+  updateAttempts();
+}
+
+function renderStats() {
+  document.getElementById("stat-played").textContent = stats.played;
+  document.getElementById("stat-wins").textContent = stats.wins;
+  document.getElementById("stat-streak").textContent = stats.streak;
+}
+
+function submitGuess(name) {
+  if (gameOver) return;
+  const char = CHARACTERS.find(c => c.name.toLowerCase() === name.toLowerCase());
+  if (!char) { shake(); return; }
+  if (guesses.find(g => g.name === char.name)) { shake(); return; }
+  guesses.push(char);
+  const results = compare(char);
+  addRow(char, results);
+  document.getElementById("search-input").value = "";
+  document.getElementById("dropdown").style.display = "none";
+  if (char.name === target.name) { endGame(true); return; }
+  if (guesses.length >= MAX_GUESSES) { endGame(false); return; }
+  updateAttempts();
+}
+
+function shake() {
+  const inp = document.getElementById("search-input");
+  inp.style.animation = "none";
+  inp.offsetHeight;
+  inp.style.animation = "shake 0.4s ease";
+}
+
+// ============================================================
+// AUTOCOMPLETE
+// ============================================================
+const input = document.getElementById("search-input");
+const drop  = document.getElementById("dropdown");
+
+input.addEventListener("input", () => {
+  const v = input.value.trim().toLowerCase();
+  drop.innerHTML = "";
+  if (!v || gameOver) { drop.style.display="none"; return; }
+  const guessedNames = guesses.map(g=>g.name);
+  const matches = CHARACTERS.filter(c =>
+    c.name.toLowerCase().includes(v) && !guessedNames.includes(c.name)
+  ).slice(0, 10);
+  if (!matches.length) { drop.style.display="none"; return; }
+  matches.forEach(c => {
+    const item = document.createElement("div");
+    item.className = "drop-item";
+    const idx = c.name.toLowerCase().indexOf(v);
+    item.innerHTML = c.name.substring(0,idx) +
+      `<mark>${c.name.substring(idx, idx+v.length)}</mark>` +
+      c.name.substring(idx+v.length);
+    item.addEventListener("mousedown", e => { e.preventDefault(); input.value = c.name; drop.style.display="none"; });
+    drop.appendChild(item);
+  });
+  drop.style.display = "block";
+});
+
+input.addEventListener("keydown", e => {
+  if (e.key === "Enter") { drop.style.display="none"; submitGuess(input.value.trim()); }
+  if (e.key === "Escape") { drop.style.display="none"; }
+});
+document.addEventListener("click", e => {
+  if (!e.target.closest("#search-wrap")) drop.style.display="none";
+});
+
+document.getElementById("guess-btn").addEventListener("click", () => submitGuess(input.value.trim()));
+
+document.getElementById("hint-btn").addEventListener("click", () => {
+  if (hintShown || gameOver) return;
+  hintShown = true;
+  const hint = HINTS[target.name] || `This character belongs to ${target.squad}.`;
+  const box = document.getElementById("hint-box");
+  box.textContent = "💡 " + hint;
+  box.style.display = "block";
+  document.getElementById("hint-btn").disabled = true;
+});
+
+document.getElementById("play-again-btn").addEventListener("click", () => {
+  const used = guesses.map(g=>g.name);
+  const pool = CHARACTERS.filter(c => !used.includes(c.name));
+  target = pool.length ? pool[Math.floor(Math.random()*pool.length)] : CHARACTERS[Math.floor(Math.random()*CHARACTERS.length)];
+  guesses = []; gameOver = false; hintShown = false;
+  document.getElementById("guesses").innerHTML = "";
+  document.getElementById("result-banner").style.display = "none";
+  document.getElementById("play-again-btn").style.display = "none";
+  document.getElementById("hint-box").style.display = "none";
+  document.getElementById("hint-btn").disabled = false;
+  document.getElementById("guess-btn").disabled = false;
+  document.getElementById("search-input").disabled = false;
+  updateAttempts();
+});
+
+// ============================================================
+// INIT
+// ============================================================
+buildHeaders();
+renderStats();
+updateAttempts();
+</script>
+
+<style>
+@keyframes shake {
+  0%,100%{transform:translateX(0)}
+  20%{transform:translateX(-6px)}
+  40%{transform:translateX(6px)}
+  60%{transform:translateX(-4px)}
+  80%{transform:translateX(4px)}
+}
+.col-h-name { text-align:left!important; padding-left:10px; }
+#col-headers .col-h { background:none; }
+</style>
+</body>
+</html>

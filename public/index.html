@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Black Cloverdle</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+
+  <link rel="stylesheet" href="style.css" />
+  <script defer src="app.js"></script>
+</head>
+
+<body>
+<div id="app">
+  <header>
+    <div class="logo-row">
+      <span class="clover-icon">🍀</span>
+      <h1>Black Cloverdle</h1>
+      <span class="clover-icon">🍀</span>
+    </div>
+    <p>Guess today's Black Clover character · Unlimited tries</p>
+  </header>
+
+  <div id="legend">
+    <div class="legend-item"><div class="legend-dot ld-green"></div>Correct</div>
+    <div class="legend-item"><div class="legend-dot ld-yellow"></div>Partial</div>
+    <div class="legend-item"><div class="legend-dot ld-gray"></div>Wrong</div>
+  </div>
+
+  <div id="search-row">
+    <input id="search-input" type="text" placeholder="Type a character name…" />
+    <button id="guess-btn">Guess</button>
+  </div>
+
+  <div id="meta-row">
+    <div id="attempts-badge">0 guesses</div>
+  </div>
+
+  <div id="col-headers"></div>
+  <div id="guesses"></div>
+
+  <div id="result-banner"></div>
+</div>
+</body>
+</html>
